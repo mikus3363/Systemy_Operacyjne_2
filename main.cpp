@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <atomic>
+#include <cstdlib>
 
 using namespace std;
 
@@ -43,20 +44,20 @@ void* philosopher(void* arg) {
         if(id % 2 == 0){ // warunek jeżeli filozof ma parzysty numer
             int rightForkId = id; // id widelca po prawej stronie
             while (!forks[rightForkId].tryLock()) { // próba zablokowania widelca po prawej stronie filozofa
-                usleep(1000); // jeżeli widelec jest zajęty to krótka pauza
+                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
             int leftForkId = (id + 1) % numPhilosophers; // id widelca po lewej stronie
             while (!forks[leftForkId].tryLock()) { // próba zablokowania widelca po lewej stronie filozofa
-                usleep(1000); // jeżeli widelec jest zajęty to krótka pauza
+                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
         } else{ // dla filozofów o nieparzystym numerze
             int leftForkId = id; // id widelca po lewej stronie
             while (!forks[leftForkId].tryLock()) { // próba zablokowania widelca po lewej stronie filozofa
-                usleep(1000); // jeżeli widelec jest zajęty to krótka pauza
+                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
             int rightForkId = (id + 1) % numPhilosophers; // id widelca po prawej stronie
             while (!forks[rightForkId].tryLock()) { // próba zablokowania widelca po prawej stronie filozofa
-                usleep(1000); // jeżeli widelec jest zajęty to krótka pauza
+                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
         }
         data->state = "je        "; // ustawienie stanu filozofa
@@ -97,8 +98,17 @@ void* updateDisplay(void* arg) {
     return nullptr; // nigdy nie jest zwracane, bo pętla nieskończona
 }
 
-int main() {
-    int numPhilosophers = 7; // liczba filozofów
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        cout << "Uzycie: " << argv[0] << " <liczba filozofow>" << endl;
+        return 1;
+    }
+
+    int numPhilosophers = atoi(argv[1]); // liczba filozofów
+    if (numPhilosophers < 2) {
+        cout << "Liczba filozofow musi byc wieksza niz 1!" << endl;
+        return 1;
+    }
 
     forks = new Fork[numPhilosophers];
 
