@@ -36,40 +36,46 @@ void* philosopher(void* arg) {
     int id = data->id; // identyfikator filozofa przypisanie
     int numPhilosophers = data->numPhilosophers; // liczba filozofów przypisanie
 
+    usleep(1000 * (rand() % 400)); // losowe opóźnienie startu (0-400000ns)
+
     while (true) {
         data->state = "mysli     "; // ustawienie stanu filozofa
-        usleep(1000000); // pauza na 1 sekundę
+
+        usleep(1000000); // pauza na sekundę
+
+        int leftForkId;
+        int rightForkId;
 
         // wzięcie widelców
         if(id % 2 == 0){ // warunek jeżeli filozof ma parzysty numer
-            int rightForkId = id; // id widelca po prawej stronie
+            rightForkId = id; // id widelca po prawej stronie
             while (!forks[rightForkId].tryLock()) { // próba zablokowania widelca po prawej stronie filozofa
-                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
+                usleep(1000 * (1 + rand() % 50)); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
-            int leftForkId = (id + 1) % numPhilosophers; // id widelca po lewej stronie
+            leftForkId = (id + 1) % numPhilosophers; // id widelca po lewej stronie
             while (!forks[leftForkId].tryLock()) { // próba zablokowania widelca po lewej stronie filozofa
-                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
+                usleep(1000 * (1 + rand() % 50)); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
         } else{ // dla filozofów o nieparzystym numerze
-            int leftForkId = id; // id widelca po lewej stronie
+            leftForkId = id; // id widelca po lewej stronie
             while (!forks[leftForkId].tryLock()) { // próba zablokowania widelca po lewej stronie filozofa
-                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
+                usleep(1000 * (1 + rand() % 50)); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
-            int rightForkId = (id + 1) % numPhilosophers; // id widelca po prawej stronie
+            rightForkId = (id + 1) % numPhilosophers; // id widelca po prawej stronie
             while (!forks[rightForkId].tryLock()) { // próba zablokowania widelca po prawej stronie filozofa
-                usleep(rand() % 1000 + 500); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
+                usleep(1000 * (1 + rand() % 50)); // jeżeli widelec jest zajęty to krótka pauza zależna od rand dla zabezpieczenia przed deadlockiem
             }
         }
         data->state = "je        "; // ustawienie stanu filozofa
-        usleep(1000000); // pauza na 1 sekundę
+        usleep(1000000); // pauza na sekundę
 
         // odłożenie widelców
         if(id % 2 == 0) { // jeżeli filozof ma parzysty numer
-            int leftForkId = (id + 1) % numPhilosophers; // id widelca po lewej stronie
+            leftForkId = (id + 1) % numPhilosophers; // id widelca po lewej stronie
             forks[leftForkId].unlock(); // odblokowanie widelca po lewej stronie
             forks[id].unlock(); // odblokowanie widelca po prawej stronie
         } else{ // jeżeli filozof ma nieparzysty numer
-            int rightForkId = (id + 1) % numPhilosophers; // id widelca po prawej stronie
+            rightForkId = (id + 1) % numPhilosophers; // id widelca po prawej stronie
             forks[rightForkId].unlock(); // odblokowanie widelca po prawej stronie
             forks[id].unlock(); // odblokowanie widelca po lewej stronie
         }
@@ -84,15 +90,12 @@ void* updateDisplay(void* arg) {
     int numPhilosophers = data[0].numPhilosophers; // liczba filozofów
 
     while (true) {
+        usleep(1000000);
+
         for (int i = 0; i < numPhilosophers; ++i) {
-            if(i % numPhilosophers == 0 && i != 0){
-                cout<<endl; // co liczbę filozofów nowa linia
-            }
-            cout << "Filozof " << i << ": " << data[i].state; // wyświetlenie co robią filozofowie
+            cout << "Filozof " << i + 1 << ": " << data[i].state;
         }
         cout << endl;
-        cout << endl;
-        usleep(1000000); // pauza na 1 sekundę
     }
 
     return nullptr; // nigdy nie jest zwracane, bo pętla nieskończona
@@ -105,6 +108,7 @@ int main(int argc, char* argv[]) {
     }
 
     int numPhilosophers = atoi(argv[1]); // liczba filozofów
+//    int numPhilosophers = 5;
     if (numPhilosophers < 2) {
         cout << "Liczba filozofow musi byc wieksza niz 1!" << endl;
         return 1;
@@ -119,18 +123,21 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < numPhilosophers; ++i) {
         data[i].id = i; // ustawienie id filozofa
         data[i].numPhilosophers = numPhilosophers; // ustawienie liczby filozofów
-        pthread_create(&threads_philosopher[i], nullptr, philosopher, &data[i]); // (wstaźnik na wątek, atrybut domyślny, funkcja rozpoczynająca wątek, argument do funkcji)
+        data[i].state = "mysli     "; // ustawienie początkującego stanu filozofów
     }
 
     pthread_t updateThread; // wątek do aktualizacji wyświetlania
     pthread_create(&updateThread, nullptr, updateDisplay, data); // utworzenie aktualnego wątku do wyświetlania. Konstrukcja tak jak wyżej
 
-    // oczekiwanie na zakończenie wątków (nigdy nie nastąpi)
-    for (int i = 0; i < numPhilosophers; ++i) {
-        pthread_join(threads_philosopher[i], nullptr);
+    for (int i = 0; i < numPhilosophers; ++i) { // rozproszone uruchamianie wątków
+        pthread_create(&threads_philosopher[i], nullptr, philosopher, &data[i]);
+        usleep(50000); // 50ms odstępu między startami wątków
     }
 
-    pthread_join(updateThread, nullptr); // czekaj na zakończenie wątku update
+
+    for (int i = 0; i < numPhilosophers; ++i) { // oczekiwanie na zakończenie wątków (nigdy nie nastąpi)
+        pthread_join(threads_philosopher[i], nullptr);
+    }
 
     // usunięcie zaalokowanej pamięci (nigdy nie nastąpi)
     delete[] threads_philosopher;
