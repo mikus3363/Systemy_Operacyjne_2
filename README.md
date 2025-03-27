@@ -60,7 +60,7 @@ Problem filozofów to klasyczny problem synchronizacji w programowaniu wielowąt
 
 - Zastosowanie zmiennej atomowej – każdy widelec jest zabezpieczony zmienną atomową locked, zapewniającą, że operacje blokowania i odblokowywania są niepodzielne, czyli wykonywane bez możliwości przerwania przez inne wątki.
 
-- Unikanie zagłodzenia – w przypadku braku dostępnych widelców, filozofowie wykonują krótkie losowe opóźnienia (usleep(rand() % 1000 + 500)). Pozwala to na bardziej sprawiedliwy dostęp do zasobów, a przy okazji niweluje zakleszczenia.
+- Unikanie zagłodzenia – w przypadku braku dostępnych widelców, filozofowie wykonują krótkie losowe opóźnienia. Pozwala to na bardziej sprawiedliwy dostęp do zasobów, a przy okazji niweluje zakleszczenia.
 
 ## **Podsumowanie**
 
@@ -129,7 +129,7 @@ The dining philosophers problem is a classic synchronization problem in multithr
 
 - Using atomic variables – Each fork is protected by an atomic variable locked, ensuring that locking and unlocking operations are indivisible, meaning they are executed without interruption from other threads.
 
-- Avoiding starvation – If forks are unavailable, philosophers introduce short random delays (usleep(rand() % 1000 + 500)). This allows for fairer resource access and helps prevent deadlocks.
+- Avoiding starvation – If forks are unavailable, philosophers introduce short random delays. This allows for fairer resource access and helps prevent deadlocks.
 
 ## **Summary**
 
